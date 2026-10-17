@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700&display=swap" rel="stylesheet">
+<title>بازی حکم</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  :root { --cw: clamp(44px, 6.8vw, 68px); --gold: #ffd54f; --panel: rgba(0,0,0,.38); }
+  .hidden { display: none !important; }
+  body {
+    margin: 0; min-height: 100vh;
+    font-family: "Vazirmatn", Tahoma, "Segoe UI", sans-serif;
+    background: radial-gradient(ellipse at 50% 30%, #1d7a35 0%, #0d3d18 55%, #06200c 100%);
+    color: #fff; overflow-x: hidden;
+  }
+  #app { max-width: 1040px; margin: 0 auto; padding: 8px 10px 20px; }
+
+  /* ---------- منوی اصلی ---------- */
+  #menu {
+    position: fixed; inset: 0; z-index: 40; overflow: auto; padding: 16px;
+    background: radial-gradient(ellipse at 50% 25%, #23903f 0%, #0d3d18 60%, #041508 100%);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .mbox { max-width: 540px; width: 100%; text-align: center; margin: auto; }
+  .mbox h1 { font-size: clamp(38px, 9vw, 60px); color: var(--gold); margin: 2px 0 4px; text-shadow: 0 4px 16px rgba(0,0,0,.5); }
+  .mbox .sub { color: #c8e6c9; font-size: 14px; margin-bottom: 14px; }
+  .deco { font-size: 34px; letter-spacing: 10px; direction: ltr; }
+  .mbtn { display: block; width: 100%; margin: 10px 0; padding: 15px; font-size: 18px; border-radius: 14px; }
+  .panel { background: rgba(0,0,0,.36); border-radius: 16px; padding: 16px; text-align: right; line-height: 1.9; font-size: 14px; border: 1px solid rgba(255,255,255,.1); }
+  .panel h3 { margin: 0 0 6px; color: var(--gold); font-size: 18px; }
+  .note { font-size: 12px; color: #b2dfdb; }
+  textarea, input[type=text] {
+    width: 100%; font-family: inherit; background: #0b2412; color: #fff; border: 1px solid #3f7a4c;
+    border-radius: 8px; padding: 8px; font-size: 12px; direction: ltr; text-align: left; margin: 4px 0;
+  }
+  input[type=text] { direction: rtl; text-align: right; font-size: 14px; }
+  textarea { height: 78px; resize: vertical; word-break: break-all; }
+  .seatrow { background: rgba(255,255,255,.07); border-radius: 12px; padding: 10px; margin: 8px 0; }
+  .seatrow b { color: #fff; }
+  .st-ok { color: #81c784; } .st-wait { color: var(--gold); } .st-bot { color: #b0bec5; }
+  .rowbtns { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+  .rowbtns button { font-size: 13px; padding: 6px 12px; }
+
+  /* ---------- نوار بالا ---------- */
+  .topbar { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; align-items: stretch; margin-bottom: 8px; }
+  .chip {
+    background: var(--panel); border-radius: 12px; padding: 7px 12px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-width: 84px; font-size: 12px; color: #cfd8dc; border: 1px solid rgba(255,255,255,.08);
+  }
+  .chip b { font-size: 18px; color: var(--gold); line-height: 1.3; }
+  .chip.team.us { border-color: rgba(129,199,132,.6); }
+  .chip.team.them { border-color: rgba(239,154,154,.6); }
+  .chip .big-suit { font-size: 30px; line-height: 1; direction: ltr; }
+  .red { color: #ff5252 !important; }
+  .dots { display: flex; gap: 3px; margin-top: 4px; direction: ltr; }
+  .dots i { width: 9px; height: 9px; border-radius: 50%; background: rgba(255,255,255,.2); display: block; }
+  .dots i.on { background: var(--gold); box-shadow: 0 0 6px var(--gold); }
+  .menu { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin-bottom: 8px; }
+  .menu button { background: rgba(255,255,255,.12); color: #fff; font-size: 13px; padding: 6px 12px; font-weight: normal; }
+  .menu button:hover { background: rgba(255,255,255,.22); }
+
+  .status {
+    text-align: center; min-height: 34px; padding: 6px 10px; margin-bottom: 8px;
+    background: var(--panel); border-radius: 10px; font-size: 15px; color: var(--gold);
+  }
+
+  /* ---------- میز ---------- */
+  .table {
+    direction: ltr; display: grid;
+    grid-template-columns: minmax(46px, 1fr) minmax(0, 3.2fr) minmax(46px, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    gap: 6px; padding: 10px;
+    background: radial-gradient(ellipse at center, #2a8a43 0%, #176b2c 70%);
+    border: 6px solid #5d3a1a; border-radius: 28px;
+    box-shadow: inset 0 0 40px rgba(0,0,0,.45), 0 10px 30px rgba(0,0,0,.5);
+  }
+  .seat { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 4px; border-radius: 14px; transition: box-shadow .2s, background .2s; }
+  .seat.active { background: rgba(255,235,59,.12); box-shadow: 0 0 0 2px var(--gold) inset; }
+  .seat-label { direction: rtl; font-size: 12px; color: #e0f2f1; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+  .seat-label .hk { color: var(--gold); }
+  .seat.p2 { grid-column: 2; grid-row: 1; }
+  .seat.p3 { grid-column: 1; grid-row: 2; }
+  .seat.p1 { grid-column: 3; grid-row: 2; }
+  .seat.p0 { grid-column: 2; grid-row: 3; }
+
+  .center {
+    grid-column: 2; grid-row: 2; position: relative;
+    display: grid; grid-template-columns: 1fr 1fr 1fr; grid-template-rows: 1fr 1fr 1fr;
+    min-height: calc(var(--cw) * 1.42 * 2.55);
+  }
+  .watermark { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: clamp(70px, 14vw, 140px); opacity: .13; pointer-events: none; }
+  .slot { display: flex; align-items: center; justify-content: center; position: relative; z-index: 1; }
+  .slot.s0 { grid-area: 3 / 2; } .slot.s1 { grid-area: 2 / 3; }
+  .slot.s2 { grid-area: 1 / 2; } .slot.s3 { grid-area: 2 / 1; }
+  .slot .card { --cw: clamp(40px, 6vw, 60px); }
+
+  /* ---------- کارت ---------- */
+  .card {
+    width: var(--cw); height: calc(var(--cw) * 1.42); flex: none;
+    background: linear-gradient(160deg, #fff 60%, #ececec);
+    border-radius: 8px; position: relative; direction: ltr; user-select: none;
+    font-family: Arial, "Segoe UI", sans-serif; font-weight: 700; color: #111; box-shadow: 0 2px 5px rgba(0,0,0,.45);
+    transition: transform .14s, box-shadow .14s, opacity .2s;
+  }
+  .card.red { color: #d32f2f !important; }
+  .card .tl, .card .br { position: absolute; line-height: 1; text-align: center; font-size: calc(var(--cw) * .26); }
+  .card .tl { top: 4px; left: 5px; }
+  .card .br { bottom: 4px; right: 5px; transform: rotate(180deg); }
+  .card .tl span, .card .br span { display: block; }
+  .card .mid { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: calc(var(--cw) * .56); }
+  .card.face { box-shadow: 0 2px 5px rgba(0,0,0,.45), inset 0 0 0 2px rgba(255,193,7,.55); }
+  .card.back {
+    background: repeating-linear-gradient(45deg, #1a4fa3 0 5px, #0e3478 5px 10px);
+    border: 2px solid #fff;
+  }
+  .card.small { --cw: 30px; border-radius: 5px; }
+  .card.small.back { border-width: 1px; }
+  .card.is-trump { box-shadow: 0 2px 5px rgba(0,0,0,.45), 0 0 0 2px rgba(255,213,79,.85); }
+
+  .hand { display: flex; justify-content: center; align-items: center; direction: ltr; }
+  .hand.h .card + .card { margin-left: calc(var(--cw) * -.58); }
+  .hand.me .card + .card { margin-left: calc(var(--cw) * -.42); }
+  .hand.v { flex-direction: column; }
+  .hand.v .card + .card { margin-top: calc(var(--cw) * 1.42 * -.72); }
+  .hand.me { padding-top: 14px; min-height: calc(var(--cw) * 1.42 + 24px); }
+  .count { font-size: 11px; background: rgba(0,0,0,.45); border-radius: 10px; padding: 1px 8px; direction: rtl; }
+
+  .card.playable { cursor: pointer; transform: translateY(-10px); box-shadow: 0 0 0 2px var(--gold), 0 4px 8px rgba(0,0,0,.5); }
+  .card.playable:hover { transform: translateY(-20px); z-index: 5; }
+  .card.dim { opacity: .45; filter: grayscale(.4); }
+  .card.hint { box-shadow: 0 0 0 3px #4fc3f7, 0 0 16px #4fc3f7; transform: translateY(-22px) !important; z-index: 6; }
+  .card.deal { animation: deal .38s ease-out backwards; }
+  @keyframes deal { from { transform: translateY(-80px) scale(.6); opacity: 0; } to { transform: none; opacity: 1; } }
+
+  .enter-0 { animation: in0 .28s ease-out; } .enter-1 { animation: in1 .28s ease-out; }
+  .enter-2 { animation: in2 .28s ease-out; } .enter-3 { animation: in3 .28s ease-out; }
+  @keyframes in0 { from { transform: translateY(130px) scale(.8); opacity: .2; } to { transform: none; opacity: 1; } }
+  @keyframes in1 { from { transform: translateX(130px) scale(.8); opacity: .2; } to { transform: none; opacity: 1; } }
+  @keyframes in2 { from { transform: translateY(-130px) scale(.8); opacity: .2; } to { transform: none; opacity: 1; } }
+  @keyframes in3 { from { transform: translateX(-130px) scale(.8); opacity: .2; } to { transform: none; opacity: 1; } }
+  .slot.collect-0 .card { transform: translateY(190px) scale(.4); opacity: 0; transition: transform .45s ease-in, opacity .45s; }
+  .slot.collect-1 .card { transform: translateX(240px) scale(.4); opacity: 0; transition: transform .45s ease-in, opacity .45s; }
+  .slot.collect-2 .card { transform: translateY(-190px) scale(.4); opacity: 0; transition: transform .45s ease-in, opacity .45s; }
+  .slot.collect-3 .card { transform: translateX(-240px) scale(.4); opacity: 0; transition: transform .45s ease-in, opacity .45s; }
+  .slot.win .card { box-shadow: 0 0 0 3px var(--gold), 0 0 18px var(--gold); }
+
+  /* ---------- کنترل‌ها ---------- */
+  .controls { display: flex; gap: 8px; justify-content: center; align-items: center; flex-wrap: wrap; margin-top: 12px; min-height: 48px; }
+  button {
+    padding: 8px 16px; border: none; border-radius: 10px; background: #ffb300; color: #000;
+    font-weight: bold; cursor: pointer; font-family: inherit; font-size: 15px; transition: background .12s, transform .1s;
+  }
+  button:hover { background: #ffca28; }
+  button:active { transform: scale(.96); }
+  button.sec { background: rgba(255,255,255,.16); color: #fff; }
+  button.sec:hover { background: rgba(255,255,255,.28); }
+  .suit-btn { font-size: 24px; padding: 8px 14px; min-width: 70px; display: flex; flex-direction: column; align-items: center; line-height: 1.1; direction: ltr; background: #fff; }
+  .suit-btn small { font-size: 11px; color: #555; direction: rtl; }
+  .suit-btn.red { color: #c62828 !important; }
+  .suit-btn:hover { background: #fff8e1; }
+
+  .log { margin-top: 10px; background: var(--panel); border-radius: 10px; padding: 8px 12px; font-size: 12px; color: #cfd8dc; min-height: 30px; line-height: 1.9; max-height: 110px; overflow: auto; }
+  .lc { display: inline-block; direction: ltr; background: #fff; color: #111; border-radius: 4px; padding: 0 4px; font-weight: bold; margin: 0 2px; font-family: Arial, sans-serif; }
+  .lc.red { color: #d32f2f; }
+
+  /* ---------- مودال و توست ---------- */
+  .modal { position: fixed; inset: 0; background: rgba(0,0,0,.65); display: flex; align-items: center; justify-content: center; z-index: 50; padding: 14px; }
+  .box { background: #17301d; border: 2px solid #3f7a4c; border-radius: 16px; padding: 18px 20px; max-width: 520px; width: 100%; max-height: 88vh; overflow: auto; line-height: 1.9; font-size: 14px; }
+  .box h2 { margin: 0 0 8px; color: var(--gold); font-size: 20px; }
+  .box h3 { margin: 12px 0 2px; color: #a5d6a7; font-size: 15px; }
+  .box ul { margin: 4px 0; padding-inline-start: 20px; }
+  .box .row { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,.08); }
+  .box select, .box input[type=checkbox] { font-family: inherit; font-size: 14px; padding: 4px 8px; border-radius: 6px; }
+  .box .actions { display: flex; gap: 8px; justify-content: center; margin-top: 14px; flex-wrap: wrap; }
+  .trick-view { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin: 10px 0; direction: ltr; }
+  .trick-view .it { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 12px; direction: rtl; }
+  .trick-view .it.w .card { box-shadow: 0 0 0 3px var(--gold), 0 0 14px var(--gold); }
+  .toast { position: fixed; top: 14px; left: 50%; transform: translateX(-50%) translateY(-40px); background: rgba(0,0,0,.85); color: var(--gold); padding: 8px 18px; border-radius: 20px; z-index: 70; opacity: 0; transition: all .25s; pointer-events: none; font-size: 14px; max-width: 90vw; text-align: center; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .bigres { text-align: center; font-size: 34px; margin: 4px 0; }
+
+  @media (max-width: 600px) {
+    :root { --cw: clamp(40px, 11.5vw, 54px); }
+    .hand.me .card + .card { margin-left: calc(var(--cw) * -.5); }
+    .chip { min-width: 70px; padding: 5px 8px; }
+    .card.small { --cw: 26px; }
+    .slot .card { --cw: clamp(36px, 10vw, 48px); }
+  }
+</style>
+</head>
+<body>
+
+<!-- ================= منوی اصلی ================= -->
+<div id="menu">
+  <div class="mbox">
+    <div class="deco"><span>♠</span><span class="red">♥</span><span class="red">♦</span><span>♣</span></div>
+    <h1>بازی حکم</h1>
+    <div class="sub">چهار نفره · دو تیم · حکم‌دار</div>
+
+    <div id="p-main">
+      <button class="mbtn" id="m-solo">🤖 بازی با رایانه</button>
+      <button class="mbtn" id="m-host">🌐 آنلاین محلی — ساخت اتاق</button>
+      <button class="mbtn" id="m-join">🔗 آنلاین محلی — پیوستن به اتاق</button>
+      <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:6px">
+        <button class="sec" id="m-rules">📖 قوانین</button>
+        <button class="sec" id="m-stats">📊 آمار</button>
+        <button class="sec" id="m-set">⚙️ تنظیمات</button>
+      </div>
+    </div>
+
+    <div id="p-host" class="panel hidden">
+      <h3>🌐 ساخت اتاق (میزبان)</h3>
+      <div class="note">بدون سرور و بدون Node: بازیکن‌ها مستقیم به مرورگر شما وصل می‌شوند. کدها را با پیام‌رسان (تلگرام، واتساپ، ...) ردوبدل کنید. دستگاه‌ها بهتر است روی یک شبکه (Wi‑Fi) باشند. صندلی‌های خالی را ربات پر می‌کند.</div>
+      <div style="margin-top:8px">نام شما:</div>
+      <input type="text" id="h-name" maxlength="16" placeholder="میزبان">
+      <div id="seatList"></div>
+      <div class="rowbtns">
+        <button id="h-start">▶ شروع بازی</button>
+        <button class="sec" id="h-back">بازگشت</button>
+      </div>
+    </div>
+
+    <div id="p-join" class="panel hidden">
+      <h3>🔗 پیوستن به اتاق</h3>
+      <div class="note">۱) کد میزبان را اینجا بچسبانید ۲) «ساخت پاسخ» را بزنید ۳) کد پاسخ را برای میزبان بفرستید و منتظر بمانید.</div>
+      <div style="margin-top:8px">نام شما:</div>
+      <input type="text" id="j-name" maxlength="16" placeholder="بازیکن">
+      <div>کد میزبان:</div>
+      <textarea id="j-offer" placeholder="کد را اینجا بچسبانید"></textarea>
+      <div class="rowbtns"><button id="j-make">ساخت پاسخ</button></div>
+      <div id="j-ans-wrap" class="hidden">
+        <div style="margin-top:8px">کد پاسخ شما (برای میزبان بفرستید):</div>
+        <textarea id="j-answer" readonly></textarea>
+        <div class="rowbtns"><button class="sec" id="j-copy">📋 کپی</button></div>
+      </div>
+      <div id="j-status" class="st-wait" style="margin-top:8px"></div>
+      <div class="rowbtns"><button class="sec" id="j-back">بازگشت</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= بازی ================= -->
+<div id="app">
+  <div class="topbar">
+    <div class="chip team us">ما<b id="ui-sc0">۰</b><div class="dots" id="dots0"></div></div>
+    <div class="chip">حکم<span class="big-suit" id="ui-trump">—</span></div>
+    <div class="chip">حاکم<b id="ui-hakem" style="font-size:15px">—</b><span id="ui-round" style="font-size:11px"></span></div>
+    <div class="chip team them">آن‌ها<b id="ui-sc1">۰</b><div class="dots" id="dots1"></div></div>
+  </div>
+  <div class="menu">
+    <button class="sec" id="b-home">🏠 منو</button>
+    <button class="sec" id="b-rules">📖 قوانین</button>
+    <button class="sec" id="b-last">🃏 آخرین دست</button>
+    <button class="sec" id="b-stats">📊 آمار</button>
+    <button class="sec" id="b-set">⚙️ تنظیمات</button>
+    <button class="sec" id="b-new">🔄 بازی جدید</button>
+  </div>
+  <div class="status" id="ui-status"></div>
+
+  <div class="table">
+    <div class="seat p2" id="seat-2"><div class="seat-label" id="lbl-2"></div><div class="hand h" id="hand-2"></div></div>
+    <div class="seat p3" id="seat-3"><div class="seat-label" id="lbl-3"></div><div class="hand v" id="hand-3"></div></div>
+    <div class="center">
+      <div class="watermark" id="ui-wm"></div>
+      <div class="slot s2" id="slot-2"></div>
+      <div class="slot s3" id="slot-3"></div>
+      <div class="slot s1" id="slot-1"></div>
+      <div class="slot s0" id="slot-0"></div>
+    </div>
+    <div class="seat p1" id="seat-1"><div class="seat-label" id="lbl-1"></div><div class="hand v" id="hand-1"></div></div>
+    <div class="seat p0" id="seat-0"><div class="seat-label" id="lbl-0"></div><div class="hand me" id="hand-0"></div></div>
+  </div>
+
+  <div class="controls" id="ui-controls"></div>
+  <div class="log" id="ui-log"></div>
+</div>
+<div class="modal hidden" id="modal"><div class="box" id="modalBox"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+  'use strict';
+
+  /* ================= ثابت‌ها ================= */
+  const SUITS = ['♠', '♥', '♦', '♣'];
+  const SUIT_NAME = { '♠': 'پیک', '♥': 'دل', '♦': 'خشت', '♣': 'گشنیز' };
+  const RANKS = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
+  const VALUES = { '2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'10':10,'J':11,'Q':12,'K':13,'A':14 };
+  const SUIT_ORDER = { '♠':0,'♥':1,'♦':2,'♣':3 };
+  const NAMES = ['شما', 'حریف ۱', 'یار شما', 'حریف ۲'];
+  const FA = ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'];
+  const toFa = n => String(n).replace(/\d/g, d => FA[+d]);
+  const $ = id => document.getElementById(id);
+  const teamOf = p => p % 2;
+  const isRed = s => s === '♥' || s === '♦';
+  const SPEED = { slow: 1100, normal: 700, fast: 320 };
+  const LEVEL_NAME = { easy: 'آسان', normal: 'متوسط', hard: 'سخت' };
+  const ICE = [];   // فقط شبکهٔ محلی؛ بدون هیچ سرور بیرونی
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+
+  /* ================= تنظیمات و آمار ================= */
+  const load = (k, d) => { try { return Object.assign({}, d, JSON.parse(localStorage.getItem(k) || '{}')); } catch (e) { return Object.assign({}, d); } };
+  const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+  const S = load('hokm_settings', { level: 'hard', speed: 'normal', target: 7, sound: true, autoSingle: false, nick: '' });
+  const ST = load('hokm_stats', { games: 0, wins: 0, rounds: 0, roundsWon: 0, kots: 0, hakemKots: 0 });
+
+  /* ================= صدا ================= */
+  let ac = null;
+  function beep(freq, dur = .08, type = 'sine', vol = .05, delay = 0) {
+    if (!S.sound) return;
+    try {
+      ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.type = type; o.frequency.value = freq; o.connect(g); g.connect(ac.destination);
+      const t = ac.currentTime + delay;
+      g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+      o.start(t); o.stop(t + dur);
+    } catch (e) {}
+  }
+  const sfx = {
+    play: () => beep(520, .06, 'triangle', .06),
+    win: () => { beep(660, .1); beep(880, .16, 'sine', .05, .1); },
+    lose: () => beep(240, .22, 'sawtooth', .03),
+    round: () => { [523, 659, 784, 1047].forEach((f, i) => beep(f, .18, 'sine', .06, i * .12)); },
+  };
+
+  /* ================= وضعیت میزبان / تک‌نفره ================= */
+  const FULL = (() => { const o = []; for (const s of SUITS) for (const r of RANKS) o.push({ suit: s, rank: r, value: VALUES[r], id: s + r }); return o; })();
+  const CB = {}; FULL.forEach(c => CB[c.id] = c);
+  const G = {
+    hands: [[], [], [], []], hakem: 0, trump: null, turn: null, trick: [],
+    tricksWon: [0, 0], roundScore: [0, 0], phase: 'idle', deck: [],
+    played: [], voids: [new Set(), new Set(), new Set(), new Set()],
+    lastTrick: null, trickNo: 0, roundNo: 0, log: [], dealAnim: false,
+    lastPlayedId: null, lastWinner: null, winHL: null, collect: null,
+    summary: null, sumId: 0, token: 0, names: ['شما', 'حریف ۱', 'یار شما', 'حریف ۲'], playerCtx: 0,
+  };
+  const H = new Set([0]);                       // صندلی‌هایی که انسان دارند
+  const NET = { role: 'solo', peers: {}, conn: null, started: false };
+  const UI = { hintId: null, LV: null, modalKind: null, sumShown: 0, prev: { trickLen: 0, winHL: null, trump: null, turn: null } };
+  let timer = null;
+  const later = (fn, ms) => { clearTimeout(timer); const t = G.token; timer = setTimeout(() => { if (t === G.token) fn(); }, ms); };
+  const D = () => SPEED[S.speed] || 700;
+
+  const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  const sortHand = h => h.sort((a, b) => a.suit !== b.suit ? SUIT_ORDER[a.suit] - SUIT_ORDER[b.suit] : b.value - a.value);
+
+  /* ================= جریان بازی (فقط میزبان) ================= */
+  function newGame() {
+    G.token++; clearTimeout(timer);
+    G.roundScore = [0, 0]; G.roundNo = 0; G.summary = null;
+    G.hakem = Math.floor(Math.random() * 4);
+    closeModal();
+    newRound();
+  }
+
+  function newRound() {
+    G.token++; clearTimeout(timer);
+    const deck = shuffle(FULL.map(c => ({ ...c })));
+    G.hands = [[], [], [], []];
+    G.trump = null; G.turn = null; G.trick = []; G.tricksWon = [0, 0];
+    G.played = []; G.voids = [new Set(), new Set(), new Set(), new Set()];
+    G.lastTrick = null; G.trickNo = 0; G.roundNo++; G.log = []; G.summary = null;
+    G.phase = 'trump'; G.dealAnim = true; G.lastWinner = null; G.winHL = null; G.collect = null;
+    for (let i = 0; i < 5; i++) for (let p = 0; p < 4; p++) G.hands[p].push(deck.pop());
+    G.hands.forEach(sortHand);
+    G.deck = deck;
+    sync();
+    afterChange();
+  }
+
+  function afterChange() {
+    if (G.phase === 'trump' && !H.has(G.hakem)) later(() => applyTrump(pickTrumpAI(G.hands[G.hakem])), D() + 400);
+    else if (G.phase === 'playing') schedule();
+  }
+
+  function applyTrump(suit) {
+    if (G.phase !== 'trump') return;
+    G.trump = suit;
+    for (let i = 0; i < 8; i++) for (let p = 0; p < 4; p++) G.hands[p].push(G.deck.pop());
+    G.hands.forEach(sortHand);
+    G.phase = 'playing'; G.turn = G.hakem; G.dealAnim = true;
+    sync();
+    schedule();
+  }
+
+  function schedule() {
+    if (G.phase !== 'playing') return;
+    if (H.has(G.turn)) {
+      if (G.turn === 0 && S.autoSingle && legalCards(0).length === 1) later(() => doPlay(0, legalCards(0)[0]), 450);
+      return;
+    }
+    later(() => { if (G.phase === 'playing' && !H.has(G.turn)) doPlay(G.turn, pickCardAI(G.turn, S.level)); }, D());
+  }
+
+  function legalCards(p) {
+    const hand = G.hands[p];
+    if (!G.trick.length) return hand.slice();
+    const led = G.trick[0].card.suit;
+    const follow = hand.filter(c => c.suit === led);
+    return follow.length ? follow : hand.slice();
+  }
+
+  function doPlay(p, card) {
+    if (G.phase !== 'playing' || G.turn !== p) return;
+    if (!legalCards(p).some(c => c.id === card.id)) return;
+    const idx = G.hands[p].findIndex(c => c.id === card.id);
+    if (idx < 0) return;
+    if (G.trick.length && card.suit !== G.trick[0].card.suit) G.voids[p].add(G.trick[0].card.suit);
+    G.hands[p].splice(idx, 1);
+    G.trick.push({ player: p, card });
+    G.lastPlayedId = card.id;
+    if (G.trick.length === 4) {
+      G.phase = 'resolving'; G.turn = null;
+      sync();
+      later(resolveTrick, D() + 350);
+    } else {
+      G.turn = (p + 1) % 4;
+      sync();
+      schedule();
+    }
+  }
+
+  function trickWinner() {
+    const led = G.trick[0].card.suit;
+    let best = G.trick[0];
+    for (let i = 1; i < 4; i++) if (beats(G.trick[i].card, best.card, led)) best = G.trick[i];
+    return best;
+  }
+
+  function beats(card, other, led) {
+    const T = G.trump;
+    const cT = card.suit === T, oT = other.suit === T;
+    if (cT && !oT) return true;
+    if (oT && !cT) return false;
+    if (card.suit === other.suit) return card.value > other.value;
+    return card.suit === led && other.suit !== led;
+  }
+
+  function resolveTrick() {
+    const win = trickWinner();
+    const w = win.player, team = teamOf(w);
+    G.tricksWon[team]++; G.trickNo++;
+    G.lastTrick = { plays: G.trick.map(t => ({ player: t.player, card: t.card })), winner: w, no: G.trickNo };
+    G.trick.forEach(t => G.played.push(t.card));
+    G.log.push({ no: G.trickNo, w, card: win.card });
+    G.lastWinner = w; G.winHL = w; G.collect = null;
+    sync();
+    later(() => {
+      G.collect = w; sync();
+      later(() => {
+        G.winHL = null; G.collect = null; G.trick = [];
+        if (G.tricksWon[0] >= 7 || G.tricksWon[1] >= 7) { endRound(team); return; }
+        G.phase = 'playing'; G.turn = w;
+        sync(); schedule();
+      }, 460);
+    }, 450);
+  }
+
+  function endRound(team) {
+    const hakTeam = teamOf(G.hakem);
+    const loserTricks = G.tricksWon[1 - team];
+    let pts = 1, kind = '';
+    if (loserTricks === 0) {
+      if (team !== hakTeam) { pts = 3; kind = 'حاکم‌کوت'; } else { pts = 2; kind = 'کوت'; }
+    }
+    G.roundScore[team] += pts;
+    const old = G.hakem;
+    if (team !== hakTeam) G.hakem = (G.hakem + 1) % 4;
+    const gameOver = G.roundScore[team] >= S.target;
+    G.phase = gameOver ? 'game_end' : 'round_end';
+    G.summary = { id: ++G.sumId, winTeam: team, pts, kind, gameOver, nextHakem: G.hakem, hakemChanged: G.hakem !== old };
+    sync();
+  }
+
+  /* ---- اعمال حرکت‌ها (از میزبان یا از بازیکنان راه دور) ---- */
+  function handleAct(seat, msg) {
+    if (!H.has(seat) || !msg) return;
+    if (msg.t === 'play') {
+      if (G.phase !== 'playing' || G.turn !== seat) return;
+      const c = G.hands[seat].find(x => x.id === msg.id);
+      if (c) doPlay(seat, c);
+    } else if (msg.t === 'trump') {
+      if (G.phase === 'trump' && G.hakem === seat && SUITS.includes(msg.suit)) applyTrump(msg.suit);
+    } else if (msg.t === 'name') {
+      G.names[seat] = String(msg.name || '').slice(0, 16) || 'بازیکن';
+      updateRows();
+      if (NET.started) sync();
+    }
+  }
+
+  /* ================= هوش مصنوعی ================= */
+  function unseen(p) {
+    const known = new Set(G.hands[p].map(c => c.id));
+    G.played.forEach(c => known.add(c.id));
+    G.trick.forEach(t => known.add(t.card.id));
+    return FULL.filter(c => !known.has(c.id));
+  }
+  const lowest = a => a.reduce((x, y) => x.value <= y.value ? x : y);
+  const highest = a => a.reduce((x, y) => x.value >= y.value ? x : y);
+
+  function pickTrumpAI(hand) {
+    const sc = {}, cnt = {}; SUITS.forEach(s => { sc[s] = 0; cnt[s] = 0; });
+    for (const c of hand) { cnt[c.suit]++; sc[c.suit] += ({14:4,13:3,12:2,11:1.4,10:.9})[c.value] || .3; }
+    let best = SUITS[0], bs = -1e9;
+    for (const s of SUITS) {
+      const v = sc[s] + cnt[s] * 1.6 + Math.random() * .3;
+      if (v > bs) { bs = v; best = s; }
+    }
+    return best;
+  }
+
+  function isMasterLead(card, un, p) {
+    const s = card.suit;
+    if (un.some(u => u.suit === s && u.value > card.value)) return false;
+    if (s === G.trump) return true;
+    const opps = [(p + 1) % 4, (p + 3) % 4];
+    const trumpLeft = un.some(c => c.suit === G.trump);
+    const oppVoid = opps.some(o => G.voids[o].has(s));
+    const noneLeft = !un.some(u => u.suit === s);
+    return !(trumpLeft && (oppVoid || noneLeft));
+  }
+
+  function dump(legal) {
+    const nonT = legal.filter(c => c.suit !== G.trump);
+    if (!nonT.length) return lowest(legal);
+    const hand = G.hands[G.playerCtx];
+    const len = s => hand.filter(c => c.suit === s).length;
+    if (nonT.every(c => c.suit === nonT[0].suit)) return lowest(nonT);
+    return nonT.reduce((a, b) => {
+      if (a.value !== b.value) return a.value < b.value ? a : b;
+      return len(a.suit) <= len(b.suit) ? a : b;
+    });
+  }
+
+  function leadPick(p, level) {
+    const hand = G.hands[p], T = G.trump;
+    const nonT = hand.filter(c => c.suit !== T), tr = hand.filter(c => c.suit === T);
+    if (level !== 'hard') {
+      const ace = nonT.find(c => c.value === 14);
+      if (ace) return ace;
+      return nonT.length ? lowest(nonT) : lowest(tr);
+    }
+    const un = unseen(p), unT = un.filter(c => c.suit === T);
+    const opps = [(p + 1) % 4, (p + 3) % 4], partner = (p + 2) % 4;
+    const masters = nonT.filter(c => isMasterLead(c, un, p)).sort((a, b) => b.value - a.value);
+    if (masters.length) return masters[0];
+    if (tr.length) {
+      const top = highest(tr);
+      if (!unT.length || unT.every(u => u.value < top.value)) return top;
+      if (teamOf(p) === teamOf(G.hakem) && tr.length >= 4 && unT.length >= 3) return top;
+    }
+    if (nonT.length) {
+      for (const s of SUITS) {
+        if (s === T || !G.voids[partner].has(s) || opps.some(o => G.voids[o].has(s))) continue;
+        const cs = nonT.filter(c => c.suit === s);
+        if (cs.length) return lowest(cs);
+      }
+      let pool = nonT.filter(c => !opps.some(o => G.voids[o].has(c.suit)));
+      if (!pool.length) pool = nonT;
+      const len = s => hand.filter(c => c.suit === s).length;
+      const minLen = Math.min(...pool.map(c => len(c.suit)));
+      return lowest(pool.filter(c => len(c.suit) === minLen));
+    }
+    return lowest(tr);
+  }
+
+  function pickCardAI(p, level) {
+    const legal = legalCards(p);
+    if (legal.length === 1) return legal[0];
+    G.playerCtx = p;
+    if (level === 'easy' && Math.random() < .4) return legal[Math.floor(Math.random() * legal.length)];
+    if (!G.trick.length) return leadPick(p, level);
+
+    const hard = level === 'hard';
+    const led = G.trick[0].card.suit;
+    const last = G.trick.length === 3;
+    let win = G.trick[0];
+    for (let i = 1; i < G.trick.length; i++) if (beats(G.trick[i].card, win.card, led)) win = G.trick[i];
+    const un = hard ? unseen(p) : null;
+    const safeVs = c => un.every(u => !beats(u, c, led));
+
+    if (teamOf(win.player) === teamOf(p)) {
+      if (last) return dump(legal);
+      if (hard) {
+        if (safeVs(win.card)) return dump(legal);
+        const bt = legal.filter(c => beats(c, win.card, led) && safeVs(c));
+        if (bt.length) return lowest(bt);
+      }
+      return dump(legal);
+    }
+    const beaters = legal.filter(c => beats(c, win.card, led));
+    if (beaters.length) {
+      if (last) return lowest(beaters);
+      if (hard) {
+        const safe = beaters.filter(safeVs);
+        if (safe.length) return lowest(safe);
+      }
+      return lowest(beaters);
+    }
+    return dump(legal);
+  }
+
+  /* ================= نمای هر بازیکن (View) ================= */
+  function buildView(seat) {
+    const legal = (G.phase === 'playing' && G.turn === seat) ? legalCards(seat).map(c => c.id) : [];
+    return {
+      me: seat, hand: G.hands[seat], counts: G.hands.map(h => h.length), legal,
+      trump: G.trump, hakem: G.hakem, turn: G.turn, trick: G.trick,
+      tricksWon: G.tricksWon, roundScore: G.roundScore, phase: G.phase, roundNo: G.roundNo,
+      log: G.log, lastTrick: G.lastTrick, lastWinner: G.lastWinner, winHL: G.winHL, collect: G.collect,
+      names: G.names, online: NET.role === 'host', deal: G.dealAnim, lastPlayedId: G.lastPlayedId,
+      summary: G.summary, target: S.target,
+    };
+  }
+
+  function sync() {
+    for (const s in NET.peers) {
+      const pr = NET.peers[s];
+      if (pr.open) send(pr.dc, { t: 'view', v: buildView(+s) });
+    }
+    renderView(normView(buildView(0)));
+    G.dealAnim = false;
+  }
+
+  const nc = c => (c && CB[c.id]) ? CB[c.id] : null;
+  const PHASES = ['idle', 'trump', 'playing', 'resolving', 'round_end', 'game_end'];
+  function normView(v) {
+    const i4 = x => ((x | 0) % 4 + 4) % 4;
+    const oi = x => (x === null || x === undefined) ? null : i4(x);
+    const plays = a => (a || []).map(t => ({ player: i4(t.player), card: nc(t.card) })).filter(t => t.card);
+    const lt = v.lastTrick;
+    const sm = v.summary;
+    return {
+      me: i4(v.me),
+      hand: (v.hand || []).map(nc).filter(Boolean),
+      counts: [0, 1, 2, 3].map(i => ((v.counts || [])[i]) | 0),
+      legal: (v.legal || []).map(String),
+      trump: SUITS.includes(v.trump) ? v.trump : null,
+      hakem: i4(v.hakem), turn: oi(v.turn),
+      trick: plays(v.trick),
+      tricksWon: [((v.tricksWon || [])[0]) | 0, ((v.tricksWon || [])[1]) | 0],
+      roundScore: [((v.roundScore || [])[0]) | 0, ((v.roundScore || [])[1]) | 0],
+      phase: PHASES.includes(v.phase) ? v.phase : 'idle', roundNo: v.roundNo | 0,
+      log: (v.log || []).map(l => ({ no: l.no | 0, w: i4(l.w), card: nc(l.card) })).filter(l => l.card),
+      lastTrick: lt ? { no: lt.no | 0, winner: i4(lt.winner), plays: plays(lt.plays) } : null,
+      lastWinner: oi(v.lastWinner), winHL: oi(v.winHL), collect: oi(v.collect),
+      names: [0, 1, 2, 3].map(i => String((v.names || [])[i] || 'بازیکن').slice(0, 16)),
+      online: !!v.online, deal: !!v.deal, lastPlayedId: v.lastPlayedId ? String(v.lastPlayedId) : null,
+      summary: sm ? { id: sm.id | 0, winTeam: sm.winTeam & 1, pts: sm.pts | 0, kind: String(sm.kind || '').slice(0, 12), gameOver: !!sm.gameOver, nextHakem: i4(sm.nextHakem), hakemChanged: !!sm.hakemChanged } : null,
+      target: v.target | 0,
+    };
+  }
+
+  /* ================= رندر ================= */
+  let curTrump = null;
+  const dp = (p, me) => (p - me + 4) % 4;
+  function label(p, V) {
+    if (p === V.me) return 'شما';
+    if (!V.online) return NAMES[p];
+    return V.names[p] + (teamOf(p) === teamOf(V.me) ? ' (یار)' : ' (حریف)');
+  }
+  const labelH = (p, V) => esc(label(p, V));
+
+  function cardEl(c, extra = '') {
+    const face = c.value >= 11 ? ' face' : '';
+    const t = c.suit === curTrump ? ' is-trump' : '';
+    return `<div class="card ${isRed(c.suit) ? 'red' : ''}${face}${t} ${extra}" data-id="${c.id}">
+      <div class="tl"><span>${c.rank}</span><span>${c.suit}</span></div>
+      <div class="mid">${c.suit}</div>
+      <div class="br"><span>${c.rank}</span><span>${c.suit}</span></div></div>`;
+  }
+  const cardInline = c => `<span class="lc ${isRed(c.suit) ? 'red' : ''}">${c.rank}${c.suit}</span>`;
+
+  function renderDots(id, n) {
+    let h = ''; for (let i = 0; i < 7; i++) h += `<i class="${i < n ? 'on' : ''}"></i>`;
+    $(id).innerHTML = h;
+  }
+
+  function fx(V) {
+    const pv = UI.prev;
+    if (V.phase !== 'trump' && V.trick.length > pv.trickLen) sfx.play();
+    if (V.winHL !== null && pv.winHL === null) {
+      toast(`${label(V.winHL, V)} ترفند را برد`);
+      teamOf(V.winHL) === teamOf(V.me) ? sfx.win() : sfx.lose();
+    }
+    if (V.trump && !pv.trump) { toast(`حکم: ${V.trump} ${SUIT_NAME[V.trump]}`); beep(440, .12, 'triangle'); }
+    if (V.turn !== pv.turn) UI.hintId = null;
+    pv.trickLen = V.trick.length; pv.winHL = V.winHL; pv.trump = V.trump; pv.turn = V.turn;
+    if (V.summary && V.summary.id !== UI.sumShown && (V.phase === 'round_end' || V.phase === 'game_end')) {
+      UI.sumShown = V.summary.id; handleSummary(V);
+    }
+    if (UI.modalKind === 'summary' && ['trump', 'playing', 'resolving'].includes(V.phase)) { closeModal(); }
+  }
+
+  function renderView(V) {
+    UI.LV = V; curTrump = V.trump;
+    fx(V);
+    const me = V.me, usT = teamOf(me), thT = 1 - usT;
+
+    $('ui-sc0').textContent = toFa(V.roundScore[usT]);
+    $('ui-sc1').textContent = toFa(V.roundScore[thT]);
+    const tr = $('ui-trump');
+    tr.textContent = V.trump || '—'; tr.className = 'big-suit' + (V.trump && isRed(V.trump) ? ' red' : '');
+    $('ui-wm').textContent = V.trump || '';
+    $('ui-wm').className = 'watermark' + (V.trump && isRed(V.trump) ? ' red' : '');
+    $('ui-hakem').textContent = label(V.hakem, V);
+    $('ui-round').textContent = `دست ${toFa(V.roundNo)} · ${V.online ? 'آنلاین' : LEVEL_NAME[S.level]}`;
+    renderDots('dots0', V.tricksWon[usT]); renderDots('dots1', V.tricksWon[thT]);
+    $('b-new').style.display = NET.role === 'client' ? 'none' : '';
+
+    // دست‌ها
+    const myTurn = V.phase === 'playing' && V.turn === me;
+    const legalIds = new Set(V.legal);
+    const deal = V.deal;
+    $('hand-0').innerHTML = V.hand.map((c, i) => {
+      let cls = deal ? 'deal' : '';
+      if (myTurn) cls += legalIds.has(c.id) ? ' playable' : ' dim';
+      if (UI.hintId === c.id) cls += ' hint';
+      const el = cardEl(c, cls);
+      return deal ? el.replace('class="card', `style="animation-delay:${i * 35}ms" class="card`) : el;
+    }).join('');
+    if (myTurn) $('hand-0').querySelectorAll('.card.playable').forEach(n =>
+      n.addEventListener('click', () => act({ t: 'play', id: n.dataset.id })));
+    for (let q = 1; q < 4; q++) {
+      const p = (me + q) % 4;
+      $('hand-' + q).innerHTML = Array.from({ length: V.counts[p] }, () => `<div class="card back small ${deal ? 'deal' : ''}"></div>`).join('');
+    }
+
+    // برچسب صندلی‌ها
+    for (let q = 0; q < 4; q++) {
+      const p = (me + q) % 4;
+      $('lbl-' + q).innerHTML = `${p === V.hakem ? '<span class="hk">👑</span> ' : ''}${labelH(p, V)}${q ? ` <span class="count">${toFa(V.counts[p])}</span>` : ''}`;
+      $('seat-' + q).classList.toggle('active', V.phase === 'playing' && V.turn === p);
+    }
+
+    // کارت‌های وسط میز
+    for (let p = 0; p < 4; p++) {
+      const q = dp(p, me);
+      const slot = $('slot-' + q);
+      const play = V.trick.find(t => t.player === p);
+      const cid = play ? play.card.id : '';
+      slot.className = 'slot s' + q + (V.winHL === p ? ' win' : '') + (V.collect !== null ? ' collect-' + dp(V.collect, me) : '');
+      if (slot.dataset.cid !== cid) {
+        slot.dataset.cid = cid;
+        slot.innerHTML = play ? cardEl(play.card, V.lastPlayedId === cid ? 'enter-' + q : '') : '';
+      }
+    }
+
+    // وضعیت
+    let st = '';
+    if (V.phase === 'trump') st = V.hakem === me ? '👑 شما حاکم هستید؛ با دیدن ۵ کارت اول، حکم را انتخاب کنید' : `${label(V.hakem, V)} در حال انتخاب حکم است...`;
+    else if (V.phase === 'playing') {
+      if (myTurn) {
+        if (V.trick.length) {
+          const led = V.trick[0].card.suit;
+          st = V.hand.some(c => c.suit === led) ? `نوبت شماست — باید از ${led} ${SUIT_NAME[led]} پیروی کنید` : 'خال را ندارید؛ هر کارتی (حتی حکم) بازی کنید';
+        } else st = 'نوبت شماست — شروع ترفند';
+      } else st = `نوبت ${label(V.turn, V)}...`;
+    } else if (V.phase === 'resolving') st = V.lastWinner !== null ? `${label(V.lastWinner, V)} برد` : '...';
+    else if (V.phase === 'round_end') st = 'دست تمام شد';
+    else if (V.phase === 'game_end') st = 'پایان بازی';
+    $('ui-status').textContent = st;
+
+    // کنترل‌ها
+    const c = $('ui-controls'); c.innerHTML = '';
+    if (V.phase === 'trump' && V.hakem === me) {
+      const cnt = s => V.hand.filter(x => x.suit === s).length;
+      const lab = document.createElement('span'); lab.textContent = 'حکم:'; c.appendChild(lab);
+      for (const s of SUITS) {
+        const b = document.createElement('button');
+        b.className = 'suit-btn' + (isRed(s) ? ' red' : '');
+        b.innerHTML = `${s}<small>${SUIT_NAME[s]} (${toFa(cnt(s))})</small>`;
+        b.onclick = () => act({ t: 'trump', suit: s });
+        c.appendChild(b);
+      }
+    } else if (myTurn && NET.role === 'solo') {
+      const b = document.createElement('button'); b.className = 'sec'; b.textContent = '💡 پیشنهاد';
+      b.onclick = () => { UI.hintId = pickCardAI(0, 'hard').id; renderView(UI.LV); };
+      c.appendChild(b);
+    }
+
+    // لاگ
+    $('ui-log').innerHTML = V.log.length
+      ? V.log.slice(-6).map(l => `<div>ترفند ${toFa(l.no)}: ${labelH(l.w, V)} با ${cardInline(l.card)} برد</div>`).join('')
+      : 'ترفندهای این دست اینجا ثبت می‌شود.';
+    $('ui-log').scrollTop = 1e6;
+  }
+
+  function handleSummary(V) {
+    const sm = V.summary, us = sm.winTeam === teamOf(V.me);
+    ST.rounds++; if (us) ST.roundsWon++;
+    if (sm.kind === 'کوت' && us) ST.kots++;
+    if (sm.kind === 'حاکم‌کوت' && us) ST.hakemKots++;
+    if (sm.gameOver) { ST.games++; if (us) ST.wins++; }
+    save('hokm_stats', ST);
+    us ? sfx.round() : sfx.lose();
+    const usT = teamOf(V.me);
+    const isClient = NET.role === 'client';
+    let html = `<div class="bigres">${sm.gameOver ? (us ? '🏆' : '😔') : (us ? '✅' : '❌')}</div>
+      <h2 style="text-align:center">${sm.gameOver ? (us ? 'تیم شما برنده بازی شد!' : 'حریفان برنده بازی شدند') : (us ? 'این دست را بردید' : 'این دست را باختید')}</h2>
+      <div style="text-align:center">ترفندها: ${toFa(V.tricksWon[usT])} - ${toFa(V.tricksWon[1 - usT])}
+      ${sm.kind ? `<br><b style="color:#ffd54f">${sm.kind}! (${toFa(sm.pts)} امتیاز)</b>` : ''}</div>
+      <div style="text-align:center;margin-top:6px">امتیاز کل: ما ${toFa(V.roundScore[usT])} - آن‌ها ${toFa(V.roundScore[1 - usT])} (هدف: ${toFa(V.target)})</div>`;
+    if (!sm.gameOver) html += `<div style="text-align:center;margin-top:4px;font-size:13px;color:#a5d6a7">حاکم دست بعد: ${labelH(sm.nextHakem, V)}${sm.hakemChanged ? ' (حاکم عوض شد)' : ''}</div>`;
+    html += isClient
+      ? `<div class="actions"><span class="note">منتظر میزبان برای ادامه...</span></div>`
+      : `<div class="actions"><button id="m-next">${sm.gameOver ? 'بازی جدید' : 'دست بعدی'}</button></div>`;
+    setTimeout(() => {
+      if (!UI.LV || !UI.LV.summary || UI.LV.summary.id !== sm.id) return;
+      showModal(html, 'summary');
+      const b = $('m-next'); if (b) b.onclick = () => sm.gameOver ? newGame() : newRound();
+    }, 500);
+  }
+
+  /* ================= مودال و توست ================= */
+  function showModal(html, kind) { UI.modalKind = kind || null; $('modalBox').innerHTML = html; $('modal').classList.remove('hidden'); }
+  function closeModal() { UI.modalKind = null; $('modal').classList.add('hidden'); }
+  window.__closeModal = closeModal;
+  let toastT = null;
+  function toast(msg) {
+    const t = $('toast'); t.textContent = msg; t.classList.add('show');
+    clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 1400);
+  }
+  $('modal').addEventListener('click', e => { if (e.target.id === 'modal' && UI.modalKind !== 'summary') closeModal(); });
+  window.addEventListener('keydown', e => { if (e.key === 'Escape' && UI.modalKind !== 'summary') closeModal(); });
+  const closeBtn = txt => `<div class="actions"><button onclick="window.__closeModal()">${txt}</button></div>`;
+
+  function openRules() {
+    showModal(`<h2>📖 قوانین حکم</h2>
+    <ul>
+      <li>چهار نفر، دو تیم: شما و یارتان (روبه‌رو) در برابر دو حریف.</li>
+      <li>حاکم ۵ کارت اول را می‌بیند و حکم را انتخاب می‌کند؛ سپس بقیهٔ کارت‌ها پخش می‌شود (۱۳ کارت برای هر نفر).</li>
+      <li>حاکم اولین ترفند را شروع می‌کند. هر کس باید از خال زمین پیروی کند؛ اگر نداشت می‌تواند هر کارتی (از جمله حکم) بازی کند.</li>
+      <li>برندهٔ ترفند: بالاترین حکم، وگرنه بالاترین کارت هم‌خال زمین. برنده، ترفند بعدی را شروع می‌کند.</li>
+      <li>هر تیمی که زودتر به ۷ ترفند برسد، دست را می‌برد.</li>
+    </ul>
+    <h3>امتیازها</h3>
+    <ul>
+      <li>برد عادی: ۱ امتیاز</li>
+      <li><b>کوت</b> (حریف هیچ ترفندی نبرد): ۲ امتیاز</li>
+      <li><b>حاکم‌کوت</b> (تیم حاکم ۷-۰ ببازد): ۳ امتیاز برای تیم مقابل</li>
+      <li>اگر تیم حاکم ببازد، حاکمیت به نفر بعدی می‌رسد.</li>
+      <li>بازی با رسیدن یک تیم به ${toFa(S.target)} امتیاز تمام می‌شود.</li>
+    </ul>${closeBtn('متوجه شدم')}`);
+  }
+  function openStats() {
+    const pct = ST.games ? Math.round(ST.wins / ST.games * 100) : 0;
+    showModal(`<h2>📊 آمار شما</h2>
+      <div class="row"><span>بازی‌های انجام‌شده</span><b>${toFa(ST.games)}</b></div>
+      <div class="row"><span>بازی‌های برده‌شده</span><b>${toFa(ST.wins)} (${toFa(pct)}٪)</b></div>
+      <div class="row"><span>دست‌های برده / کل</span><b>${toFa(ST.roundsWon)} / ${toFa(ST.rounds)}</b></div>
+      <div class="row"><span>کوت‌ها</span><b>${toFa(ST.kots)}</b></div>
+      <div class="row"><span>حاکم‌کوت‌ها</span><b>${toFa(ST.hakemKots)}</b></div>
+      <div class="actions"><button class="sec" id="m-reset">پاک‌کردن آمار</button><button onclick="window.__closeModal()">بستن</button></div>`);
+    $('m-reset').onclick = () => { Object.keys(ST).forEach(k => ST[k] = 0); save('hokm_stats', ST); closeModal(); toast('آمار پاک شد'); };
+  }
+  function openSettings() {
+    const sel = (id, opts, cur) => `<select id="${id}">${opts.map(([v, t]) => `<option value="${v}" ${String(v) === String(cur) ? 'selected' : ''}>${t}</option>`).join('')}</select>`;
+    showModal(`<h2>⚙️ تنظیمات</h2>
+      <div class="row"><span>سطح ربات‌ها</span>${sel('s-level', [['easy', 'آسان'], ['normal', 'متوسط'], ['hard', 'سخت']], S.level)}</div>
+      <div class="row"><span>سرعت بازی ربات‌ها</span>${sel('s-speed', [['slow', 'کند'], ['normal', 'معمولی'], ['fast', 'سریع']], S.speed)}</div>
+      <div class="row"><span>امتیاز لازم برای بردن</span>${sel('s-target', [[3, '۳'], [5, '۵'], [7, '۷'], [11, '۱۱']], S.target)}</div>
+      <div class="row"><span>صدا</span><input type="checkbox" id="s-sound" ${S.sound ? 'checked' : ''}></div>
+      <div class="row"><span>بازی خودکار وقتی فقط یک کارت مجاز است (تک‌نفره/میزبان)</span><input type="checkbox" id="s-auto" ${S.autoSingle ? 'checked' : ''}></div>
+      <div style="font-size:12px;color:#a5d6a7;margin-top:6px">«سطح» و «امتیاز هدف» از بازی بعدی کامل اعمال می‌شود. در حالت آنلاین، سطح و امتیاز هدف را میزبان تعیین می‌کند.</div>
+      <div class="actions"><button id="s-ok">ذخیره</button></div>`);
+    $('s-ok').onclick = () => {
+      S.level = $('s-level').value; S.speed = $('s-speed').value; S.target = +$('s-target').value;
+      S.sound = $('s-sound').checked; S.autoSingle = $('s-auto').checked;
+      save('hokm_settings', S); closeModal();
+      if (UI.LV) renderView(UI.LV);
+      if (NET.role !== 'client' && G.phase === 'playing') schedule();
+    };
+  }
+  function openLast() {
+    const lt = UI.LV && UI.LV.lastTrick;
+    if (!lt) { toast('هنوز ترفندی انجام نشده'); return; }
+    const V = UI.LV;
+    showModal(`<h2>🃏 آخرین ترفند (شمارهٔ ${toFa(lt.no)})</h2>
+      <div class="trick-view">${lt.plays.map(t => `<div class="it ${t.player === lt.winner ? 'w' : ''}">${cardEl(t.card)}<span>${labelH(t.player, V)}${t.player === lt.winner ? ' ✔' : ''}</span></div>`).join('')}</div>
+      ${closeBtn('بستن')}`);
+  }
+  ['b-rules', 'm-rules'].forEach(i => $(i).onclick = openRules);
+  ['b-stats', 'm-stats'].forEach(i => $(i).onclick = openStats);
+  ['b-set', 'm-set'].forEach(i => $(i).onclick = openSettings);
+  $('b-last').onclick = openLast;
+  $('b-new').onclick = () => { if (confirm('بازی فعلی رها شود و بازی جدید شروع شود؟')) newGame(); };
+
+  /* ================= شبکه (WebRTC بدون سرور) ================= */
+  const send = (dc, obj) => { try { if (dc && dc.readyState === 'open') dc.send(JSON.stringify(obj)); } catch (e) {} };
+  function act(msg) {
+    if (NET.role === 'client') send(NET.conn && NET.conn.dc, msg);
+    else handleAct(0, msg);
+  }
+
+  const b64e = u8 => {
+    let s = '';
+    for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000));
+    return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  };
+  const b64d = str => {
+    str = str.replace(/-/g, '+').replace(/_/g, '/'); while (str.length % 4) str += '=';
+    const s = atob(str), u = new Uint8Array(s.length);
+    for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i);
+    return u;
+  };
+  async function pipe(u8, Stream) {
+    const st = new Stream('deflate-raw'), w = st.writable.getWriter();
+    w.write(u8); w.close();
+    return new Uint8Array(await new Response(st.readable).arrayBuffer());
+  }
+  // کد کوتاه: فقط اطلاعات ضروری اتصال (ufrag، pwd، اثرانگشت، آدرس‌ها)
+  function compactSdp(desc) {
+    const sdp = desc.sdp;
+    const g = re => { const m = sdp.match(re); return m ? m[1] : null; };
+    const ufrag = g(/a=ice-ufrag:(\S+)/), pwd = g(/a=ice-pwd:(\S+)/), fp = g(/a=fingerprint:sha-256 (\S+)/);
+    const cands = [];
+    for (const m of sdp.matchAll(/a=candidate:\S+ 1 udp \d+ (\S+) (\d+) typ host/g))
+      if (!m[1].includes(':')) cands.push(m[1] + '/' + m[2]);
+    if (!ufrag || !pwd || !fp || !cands.length) return null;
+    const fpB = b64e(Uint8Array.from(fp.split(':').map(h => parseInt(h, 16))));
+    return 'Q' + (desc.type === 'offer' ? 'o' : 'a') + '.' + [ufrag, pwd, fpB, cands.slice(0, 2).join(',')].join('~');
+  }
+  function expandSdp(code) {
+    const kind = code[1];
+    const [ufrag, pwd, fpB, cs] = code.slice(3).split('~');
+    if (!ufrag || !pwd || !fpB || !cs) throw new Error('bad-code');
+    const fpHex = Array.from(b64d(fpB), b => b.toString(16).padStart(2, '0').toUpperCase()).join(':');
+    const lines = ['v=0', 'o=- 1 2 IN IP4 127.0.0.1', 's=-', 't=0 0', 'a=group:BUNDLE 0', 'a=msid-semantic: WMS',
+      'm=application 9 UDP/DTLS/SCTP webrtc-datachannel', 'c=IN IP4 0.0.0.0',
+      'a=ice-ufrag:' + ufrag, 'a=ice-pwd:' + pwd, 'a=fingerprint:sha-256 ' + fpHex,
+      'a=setup:' + (kind === 'o' ? 'actpass' : 'active'), 'a=mid:0', 'a=sctp-port:5000', 'a=max-message-size:262144'];
+    cs.split(',').forEach((c, i) => { const [h, p] = c.split('/'); lines.push(`a=candidate:${i + 1} 1 udp ${2113937151 - i} ${h} ${p} typ host generation 0`); });
+    lines.push('a=end-of-candidates');
+    return { type: kind === 'o' ? 'offer' : 'answer', sdp: lines.join('\r\n') + '\r\n' };
+  }
+  async function enc(desc) {
+    const short = compactSdp(desc);
+    if (short) return short;
+    const u = new TextEncoder().encode(JSON.stringify({ t: desc.type, s: desc.sdp }));
+    if (window.CompressionStream) return 'H1.' + b64e(await pipe(u, CompressionStream));
+    return 'H0.' + b64e(u);
+  }
+  async function dec(code) {
+    code = String(code).replace(/\s+/g, '');
+    if (code[0] === 'Q' && (code[1] === 'o' || code[1] === 'a') && code[2] === '.') return expandSdp(code);
+    const k = code.slice(0, 3);
+    let u = b64d(code.slice(3));
+    if (k === 'H1.') { if (!window.DecompressionStream) throw new Error('no-decompress'); u = await pipe(u, DecompressionStream); }
+    else if (k !== 'H0.') throw new Error('bad-code');
+    const o = JSON.parse(new TextDecoder().decode(u));
+    if ((o.t !== 'offer' && o.t !== 'answer') || typeof o.s !== 'string') throw new Error('bad-code');
+    return { type: o.t, sdp: o.s };
+  }
+  function iceDone(pc, ms = 1500) {
+    return new Promise(res => {
+      if (pc.iceGatheringState === 'complete') return res();
+      const t = setTimeout(done, ms);
+      function chk() { if (pc.iceGatheringState === 'complete') done(); }
+      function done() { clearTimeout(t); pc.removeEventListener('icegatheringstatechange', chk); res(); }
+      pc.addEventListener('icegatheringstatechange', chk);
+    });
+  }
+  function copyEl(id) {
+    const el = $(id); el.focus(); el.select();
+    const ok = () => toast('کپی شد ✔');
+    try { navigator.clipboard.writeText(el.value).then(ok, () => { document.execCommand('copy'); ok(); }); }
+    catch (e) { try { document.execCommand('copy'); ok(); } catch (_) {} }
+  }
+
+  /* ---------- میزبان ---------- */
+  const SEAT_T = { 1: 'حریف ۱ (سمت راست میز)', 2: 'یار شما (روبه‌رو)', 3: 'حریف ۲ (سمت چپ میز)' };
+  function buildSeatRows() {
+    $('seatList').innerHTML = [1, 2, 3].map(s => `<div class="seatrow">
+      <b>${SEAT_T[s]}</b> — <span id="ss-${s}" class="st-bot">🤖 ربات</span>
+      <div class="rowbtns"><button class="sec" data-inv="${s}">✉️ ساخت دعوت‌نامه</button></div>
+      <div id="sa-${s}" class="hidden">
+        <div class="note">۱) این کد را برای دوستتان بفرستید:</div>
+        <textarea id="so-${s}" readonly></textarea>
+        <div class="rowbtns"><button class="sec" data-cp="so-${s}">📋 کپی</button></div>
+        <div class="note" style="margin-top:6px">۲) کد پاسخ او را اینجا بچسبانید:</div>
+        <textarea id="sr-${s}" placeholder="کد پاسخ"></textarea>
+        <div class="rowbtns"><button data-acc="${s}">🔌 اتصال</button></div>
+      </div></div>`).join('');
+  }
+  function updateRows() {
+    for (let s = 1; s <= 3; s++) {
+      const el = $('ss-' + s); if (!el) continue;
+      const pr = NET.peers[s];
+      if (pr && pr.open) { el.className = 'st-ok'; el.textContent = '✅ متصل: ' + G.names[s]; }
+      else if (pr) { el.className = 'st-wait'; el.textContent = '⏳ منتظر پاسخ / اتصال'; }
+      else { el.className = 'st-bot'; el.textContent = '🤖 ربات'; }
+    }
+  }
+  function closePeer(s) {
+    const pr = NET.peers[s];
+    if (pr) { pr.dead = true; try { pr.dc && pr.dc.close(); } catch (e) {} try { pr.pc.close(); } catch (e) {} }
+    delete NET.peers[s]; H.delete(+s); G.names[s] = 'ربات';
+  }
+  function peerLost(s, pr) {
+    if (pr.dead) return;
+    pr.dead = true;
+    const was = pr.open; pr.open = false;
+    if (NET.peers[s] === pr) { delete NET.peers[s]; H.delete(+s); G.names[s] = 'ربات'; }
+    updateRows();
+    if (was && NET.started) { toast('یک بازیکن قطع شد؛ ربات جایگزین شد'); sync(); afterChange(); }
+  }
+  async function invite(s) {
+    closePeer(s);
+    const pc = new RTCPeerConnection({ iceServers: ICE });
+    const dc = pc.createDataChannel('hokm');
+    const pr = { pc, dc, open: false, dead: false };
+    NET.peers[s] = pr; updateRows();
+    dc.onopen = () => { pr.open = true; H.add(+s); send(dc, { t: 'hello', seat: +s }); updateRows(); toast('بازیکن متصل شد ✔'); };
+    dc.onmessage = e => {
+      let m; try { m = JSON.parse(e.data); } catch (_) { return; }
+      if (m && typeof m === 'object') handleAct(+s, m);
+    };
+    dc.onclose = () => peerLost(s, pr);
+    pc.onconnectionstatechange = () => { if (['failed', 'closed', 'disconnected'].includes(pc.connectionState)) peerLost(s, pr); };
+    $('sa-' + s).classList.remove('hidden');
+    $('so-' + s).value = 'در حال ساخت کد...';
+    try {
+      const off = await pc.createOffer(); await pc.setLocalDescription(off); await iceDone(pc);
+      $('so-' + s).value = await enc(pc.localDescription);
+    } catch (e) { $('so-' + s).value = 'خطا در ساخت کد'; }
+  }
+  async function accept(s) {
+    const pr = NET.peers[s];
+    if (!pr) { toast('ابتدا دعوت‌نامه بسازید'); return; }
+    try { await pr.pc.setRemoteDescription(await dec($('sr-' + s).value)); toast('در حال اتصال...'); }
+    catch (e) { toast('کد پاسخ نامعتبر است'); }
+  }
+  $('seatList').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.inv) invite(+b.dataset.inv);
+    else if (b.dataset.cp) copyEl(b.dataset.cp);
+    else if (b.dataset.acc) accept(+b.dataset.acc);
+  });
+
+  function startOnline() {
+    const nm = $('h-name').value.trim().slice(0, 16) || 'میزبان';
+    S.nick = nm; save('hokm_settings', S);
+    G.names[0] = nm;
+    for (const s of [1, 2, 3]) { const pr = NET.peers[s]; if (pr && !pr.open) closePeer(s); }
+    NET.role = 'host'; NET.started = true;
+    for (const s of [1, 2, 3]) if (!NET.peers[s]) G.names[s] = 'ربات ' + toFa(s);
+    $('menu').classList.add('hidden');
+    UI.sumShown = G.sumId; UI.prev = { trickLen: 0, winHL: null, trump: null, turn: null };
+    newGame();
+  }
+
+  /* ---------- پیوستن ---------- */
+  function joinStatus(t, cls) { const el = $('j-status'); el.textContent = t; el.className = cls || 'st-wait'; }
+  async function makeAnswer() {
+    try {
+      const desc = await dec($('j-offer').value);
+      if (desc.type !== 'offer') throw new Error('bad-code');
+      leaveNet();
+      const pc = new RTCPeerConnection({ iceServers: ICE });
+      NET.role = 'client'; NET.conn = { pc, dc: null };
+      pc.ondatachannel = ev => {
+        const dc = ev.channel; NET.conn.dc = dc;
+        dc.onopen = () => {
+          const nm = $('j-name').value.trim().slice(0, 16) || 'بازیکن';
+          S.nick = nm; save('hokm_settings', S);
+          send(dc, { t: 'name', name: nm });
+          joinStatus('✅ متصل شدید؛ منتظر شروع بازی توسط میزبان...', 'st-ok');
+        };
+        dc.onmessage = onHostMsg;
+        dc.onclose = clientLost;
+      };
+      pc.onconnectionstatechange = () => { if (['failed', 'closed'].includes(pc.connectionState)) clientLost(); };
+      joinStatus('در حال ساخت پاسخ...');
+      await pc.setRemoteDescription(desc);
+      const ans = await pc.createAnswer(); await pc.setLocalDescription(ans); await iceDone(pc);
+      $('j-answer').value = await enc(pc.localDescription);
+      $('j-ans-wrap').classList.remove('hidden');
+      joinStatus('این پاسخ را برای میزبان بفرستید و منتظر اتصال بمانید...');
+    } catch (e) {
+      NET.role = 'solo'; NET.conn = null;
+      joinStatus('❌ کد میزبان نامعتبر است یا مرورگر پشتیبانی نمی‌کند', 'red');
+    }
+  }
+  function onHostMsg(e) {
+    let m; try { m = JSON.parse(e.data); } catch (_) { return; }
+    if (!m || typeof m !== 'object') return;
+    if (m.t === 'view' && m.v && typeof m.v === 'object') {
+      if (!$('menu').classList.contains('hidden')) {
+        $('menu').classList.add('hidden');
+        UI.sumShown = 0; UI.prev = { trickLen: 0, winHL: null, trump: null, turn: null };
+        UI.sumShown = m.v.summary ? (m.v.summary.id | 0) : 0;
+      }
+      renderView(normView(m.v));
+    }
+  }
+  function clientLost() {
+    if (NET.role !== 'client') return;
+    toast('ارتباط با میزبان قطع شد');
+    backToMenu();
+  }
+
+  /* ---------- منو و پاک‌سازی ---------- */
+  function leaveNet() {
+    for (const s in NET.peers) { send(NET.peers[s].dc, { t: 'bye' }); closePeer(s); }
+    if (NET.conn) { const c = NET.conn; NET.conn = null; NET.role = 'solo'; try { c.dc && c.dc.close(); } catch (e) {} try { c.pc.close(); } catch (e) {} }
+    NET.peers = {}; NET.started = false;
+    H.clear(); H.add(0);
+  }
+  function showPanel(id) {
+    ['p-main', 'p-host', 'p-join'].forEach(p => $(p).classList.toggle('hidden', p !== id));
+  }
+  function backToMenu() {
+    G.token++; clearTimeout(timer);
+    leaveNet(); NET.role = 'solo';
+    closeModal(); UI.hintId = null; UI.LV = null;
+    G.names = ['شما', 'حریف ۱', 'یار شما', 'حریف ۲'];
+    $('j-ans-wrap').classList.add('hidden'); $('j-offer').value = ''; joinStatus('');
+    showPanel('p-main'); $('menu').classList.remove('hidden');
+  }
+
+  $('m-solo').onclick = () => {
+    leaveNet(); NET.role = 'solo';
+    G.names = ['شما', 'حریف ۱', 'یار شما', 'حریف ۲'];
+    $('menu').classList.add('hidden');
+    UI.sumShown = G.sumId; UI.prev = { trickLen: 0, winHL: null, trump: null, turn: null };
+    newGame();
+  };
+  $('m-host').onclick = () => {
+    leaveNet(); NET.role = 'solo';
+    G.names = ['میزبان', 'ربات ۱', 'ربات ۲', 'ربات ۳'];
+    $('h-name').value = S.nick || '';
+    buildSeatRows(); updateRows(); showPanel('p-host');
+  };
+  $('m-join').onclick = () => { $('j-name').value = S.nick || ''; showPanel('p-join'); };
+  $('h-start').onclick = startOnline;
+  $('h-back').onclick = backToMenu;
+  $('j-back').onclick = backToMenu;
+  $('j-make').onclick = makeAnswer;
+  $('j-copy').onclick = () => copyEl('j-answer');
+  $('b-home').onclick = () => { if (confirm('به منوی اصلی برگردیم؟ (بازی فعلی رها می‌شود)')) backToMenu(); };
+  window.addEventListener('beforeunload', () => { for (const s in NET.peers) send(NET.peers[s].dc, { t: 'bye' }); });
+})();
+</script>
+</body>
+</html>
